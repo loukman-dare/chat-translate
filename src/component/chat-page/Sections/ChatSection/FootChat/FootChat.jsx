@@ -3,7 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import React ,{useState,useRef,useCallback} from 'react'
 import Webcam from "react-webcam";
 import EmojiPicker from 'emoji-picker-react';
-const FootChat = () => {
+const FootChat = ({onDataChange}) => {
+    
     const [isRecording, setIsRecording] = useState(false);
     const [audioURL, setAudioURL] = useState('');
     const mediaRecorderRef = useRef(null);  
@@ -15,33 +16,46 @@ const FootChat = () => {
     const [openEmoji , SetOpenEmoji] = useState(false)
     const [inputStr, setInputStr] = useState("");
 
-  const onEmojiClick = (event, emojiObject) => {
-    setInputStr((prevInput) => prevInput + emojiObject.emoji);
-    setShowPicker(false);
-  };
 
-    const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      audioChunksRef.current = [];
 
-      mediaRecorderRef.current.ondataavailable = event => {
-        audioChunksRef.current.push(event.data);
-      };
+    const handleKeyDown = (event) => {
+      if (event.key === 'Enter') {
+        handleSubmit();
+      }
+    };
+  
+    const handleSubmit = () => {
+      onDataChange(inputStr);
+      setInputStr("")
+    };
+  
+    const onEmojiClick = (event, emojiObject) => {
+      setInputStr((prevInput) => prevInput + emojiObject.emoji);
+      setShowPicker(false);
+    };
 
-      mediaRecorderRef.current.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-        const audioURL = URL.createObjectURL(audioBlob);
-        setAudioURL(audioURL);
-      };
+      const startRecording = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorderRef.current = new MediaRecorder(stream);
+        audioChunksRef.current = [];
 
-      mediaRecorderRef.current.start();
-      setIsRecording(true);
-    } catch (err) {
-      console.error('Error accessing microphone', err);
-    }
-  };
+        mediaRecorderRef.current.ondataavailable = event => {
+          audioChunksRef.current.push(event.data);
+        };
+
+        mediaRecorderRef.current.onstop = () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+          const audioURL = URL.createObjectURL(audioBlob);
+          setAudioURL(audioURL);
+        };
+
+        mediaRecorderRef.current.start();
+        setIsRecording(true);
+      } catch (err) {
+        console.error('Error accessing microphone', err);
+      }
+    };
 
   const stopRecording = () => {
     mediaRecorderRef.current.stop();
@@ -63,7 +77,7 @@ const FootChat = () => {
     <div className='bg-secondary p-8 flex gap-2 items-center text-xl'>
         <div className='w-[95%] flex items-center gap-2  h-fit p-2 rounded-full bg-white'>
             <FontAwesomeIcon onClick={startRecording} icon={faMicrophone} className='text-text2 text-2xl '/>
-            <input value={inputStr} onChange={(e) => setInputStr(e.target.value)} type='text' placeholder='Wrute Something..' className='outline-none bg-transparent w-full placeholder:text-text2 placeholder:text-sm'/>
+            <input onKeyDown={handleKeyDown} value={inputStr} onChange={(e) => setInputStr(e.target.value)} type='text' placeholder='Wrute Something..' className='outline-none bg-transparent w-full placeholder:text-text2 placeholder:text-sm'/>
             <div className='flex gap-1 items-center'>
                 <div>
                   <input
@@ -117,7 +131,7 @@ const FootChat = () => {
             </div>
         </div>
         <div>
-            <FontAwesomeIcon icon={faPaperPlane} className='text-text2 text-xl cursor-pointer' />
+            <FontAwesomeIcon onClick={handleSubmit} icon={faPaperPlane} className='text-text2 text-xl cursor-pointer' />
         </div>
         {
           isRecording ? (<div className='absolute w-full h-full  bg-gray-400 opacity-90 left-0 top-0 flex justify-center items-center'>
